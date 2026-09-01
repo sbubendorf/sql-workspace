@@ -1,0 +1,1036 @@
+<TEMPLATES>
+   <TEMPLATE name="autonproc" advanced="false">
+      <DESCRIPTION>Autonomous transaction PROCEDURE shell</DESCRIPTION>
+      <CODE><![CDATA[PROCEDURE | ()
+IS
+   -- Available in Oracle8i and above
+   PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+   -- Upon successful completion, save all changes.
+   COMMIT;
+EXCEPTION
+   -- For each error handler, don't forget the rollback!
+   WHEN OTHERS 
+   THEN
+      ROLLBACK;   
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="crbl" advanced="false">
+      <DESCRIPTION>Entire cursor block</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   CURSOR &c1 IS
+      SELECT | FROM   WHERE;
+   c1rec &c1%ROWTYPE;
+BEGIN
+   OPEN &c1;
+   LOOP
+      FETCH &c1 INTO c1rec;
+      EXIT WHEN &c1%NOTFOUND;
+   END LOOP;
+   CLOSE &c1;
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="crbo" advanced="false">
+      <DESCRIPTION>Package body cursor</DESCRIPTION>
+      <CODE><![CDATA[/* declare package body */
+CURSOR c1 RETURN |tablename%ROWTYPE IS
+   SELECT ....;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="crloop" advanced="false">
+      <DESCRIPTION>Cursor LOOP</DESCRIPTION>
+      <CODE><![CDATA[OPEN &c1;
+LOOP
+   FETCH &c1.| INTO  ;
+   EXIT WHEN &c1%NOTFOUND;
+END LOOP;
+CLOSE &c1;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="crsp" advanced="false">
+      <DESCRIPTION>Package spec cursor</DESCRIPTION>
+      <CODE><![CDATA[/* declare package cursor specification */
+CURSOR c1 RETURN |tablename%ROWTYPE;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="crt" advanced="false">
+      <DESCRIPTION>CREATE TABLE AS Query</DESCRIPTION>
+      <CODE><![CDATA[CREATE TABLE | AS (
+)]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="cur" advanced="false">
+      <DESCRIPTION>CURSOR declaration</DESCRIPTION>
+      <CODE><![CDATA[CURSOR c1 IS
+   SELECT | FROM table_name WHERE column_name = value;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="curfor" advanced="false">
+      <DESCRIPTION>CURSOR FOR-LOOP</DESCRIPTION>
+      <CODE><![CDATA[FOR c1_rec IN &c1 LOOP
+   |;
+END LOOP;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="curpar" advanced="false">
+      <DESCRIPTION>CURSOR with Parameter declaration</DESCRIPTION>
+      <CODE><![CDATA[CURSOR c2 (xxx NUMBER) IS
+   SELECT | FROM table_name WHERE column_name = xxx;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="curpfor" advanced="false">
+      <DESCRIPTION>CURSOR with Parameter FOR-LOOP</DESCRIPTION>
+      <CODE><![CDATA[FOR c2_rec IN c2 (yyy) LOOP
+   |;
+END LOOP;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="dolocal" advanced="false">
+      <DESCRIPTION>Local DBMS_OUTPUT Substitute</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   -- Will wrap arbitrarily long strings, and automatically expand  
+   -- the DBMS_OUTPUT buffer.
+   PROCEDURE pl (
+      str         IN   VARCHAR2,
+      len         IN   INTEGER := 80,
+      expand_in   IN   BOOLEAN := TRUE
+   )
+   IS 
+      v_len   PLS_INTEGER     := LEAST (len, 255);
+      v_str   VARCHAR2 (2000);
+   BEGIN
+      IF LENGTH (str) > v_len
+      THEN
+         v_str := SUBSTR (str, 1, v_len);
+         DBMS_OUTPUT.put_line (v_str);
+         pl (SUBSTR (str, len   + 1), v_len,expand_in);
+      ELSE
+         v_str := str;
+         DBMS_OUTPUT.put_line (v_str);
+      END IF;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         IF expand_in
+         THEN
+            DBMS_OUTPUT.ENABLE (1000000);
+            DBMS_OUTPUT.put_line (v_str);
+         ELSE
+            RAISE;
+         END IF;
+   END;
+BEGIN
+   |
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="fadel" advanced="false">
+      <DESCRIPTION>FORALL Delete</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   l_array  <array_type_declaration>;
+BEGIN
+   FORALL indx IN l_array.FIRST .. l_array.LAST
+      DELETE FROM |
+       WHERE column = l_array (indx);
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="faexc" advanced="false">
+      <DESCRIPTION>FORALL with SAVE EXCEPTIONS error handling</DESCRIPTION>
+      <CODE><![CDATA[DECLARE -- Oracle9i and above!
+  l_array   <array_type_declaration>;
+  bulk_errors EXCEPTION;
+   PRAGMA EXCEPTION_INIT ( bulk_errors, -24381 );
+BEGIN    
+   FORALL indx IN l_array.FIRST .. l_array.LAST
+      SAVE EXCEPTIONS
+      /*DML statement of choice*/
+	  |;
+EXCEPTION
+   WHEN bulk_errors 
+   THEN 
+      FOR indx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
+      LOOP
+         DBMS_OUTPUT.PUT_LINE (
+            'Error ' || indx || ' occurred during ' ||
+            'iteration ' || SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX ||
+            ' updating name to ' ||
+                 enames_with_errors(SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX));
+         DBMS_OUTPUT.PUT_LINE (
+            'Oracle error is ' ||
+            SQLERRM(-1 * SQL%BULK_EXCEPTIONS(indx).ERROR_CODE));
+      END LOOP;   
+END;
+/]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="fains" advanced="false">
+      <DESCRIPTION>FORALL Insert</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   l_array1     <array_type_declaration>;
+   l_array2     <array_type_declaration>;
+   l_array3     <array_type_declaration>;
+BEGIN
+   FORALL indx IN l_array1.FIRST .. l_array1.LAST
+      INSERT INTO |
+         ( column list )
+         VALUES
+         (l_array2 (indx), l_array3 (indx) ...);
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="faupd" advanced="false">
+      <DESCRIPTION>FORALL Update</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   l_array1 <array_type_declaration>;
+   l_array2 <array_type_declaration>;
+BEGIN
+   FORALL indx IN l_array1.FIRST .. l_array1.LAST
+      UPDATE |
+         SET column = l_array2 (indx)
+       WHERE column = l_array1 (indx);
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="for" advanced="false">
+      <DESCRIPTION>FOR-LOOP statement</DESCRIPTION>
+      <CODE><![CDATA[FOR | IN 1 .. 10 LOOP
+END LOOP;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="forwo" advanced="false">
+      <DESCRIPTION>Nested FOR-LOOPs with EXIT-WHEN outer</DESCRIPTION>
+      <CODE><![CDATA[<<outer>>
+FOR i IN 1 .. 10 LOOP
+   FOR j IN 1 .. 10 LOOP
+      EXIT outer WHEN |;
+   END LOOP;
+END LOOP outer;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="func" advanced="false">
+      <DESCRIPTION>FUNCTION shell</DESCRIPTION>
+      <CODE><![CDATA[FUNCTION | () RETURN &returntype
+IS
+  xxx &returntype;
+BEGIN
+   RETURN xxx;
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="getline" advanced="false">
+      <DESCRIPTION>Local substitute for UTL_FILE.GET_LINE</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   -- Trap NO_DATA_FOUND and return EOF flag.
+   file_id UTL_FILE.FILE_TYPE;
+   line VARCHAR2(32767);
+   eof BOOLEAN;
+   PROCEDURE get_nextline 
+     (file_in IN UTL_FILE.FILE_TYPE, 
+      line_out OUT VARCHAR2, 
+      eof_out OUT BOOLEAN)
+   IS
+   BEGIN
+      UTL_FILE.GET_LINE (file_in, line_out);
+      eof_out := FALSE;
+   EXCEPTION
+      WHEN NO_DATA_FOUND
+      THEN
+        line_out := NULL;
+        eof_out  := TRUE;
+   END;
+BEGIN /* main */
+   file_id := UTL_FILE.FOPEN (
+      <location>, <filename>, max_linesize => 32767);
+      
+   LOOP
+      get_nextline (file_id, line, eof);
+      EXIT WHEN eof;
+      /*process line*/
+	  |
+   END LOOP;
+   
+   UTL_FILE.FCLOSE (file_id);
+END;   ]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="goto" advanced="false">
+      <DESCRIPTION>GOTO statment</DESCRIPTION>
+      <CODE><![CDATA[<<code_label>>
+|;
+goto code_label;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ift" advanced="false">
+      <DESCRIPTION>IF-THEN statement</DESCRIPTION>
+      <CODE><![CDATA[IF | THEN
+END IF;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ifte" advanced="false">
+      <DESCRIPTION>IF-THEN-ELSE statement</DESCRIPTION>
+      <CODE><![CDATA[IF | THEN
+ELSE
+END IF;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="iftei" advanced="false">
+      <DESCRIPTION>IF-THEN-ELSIF statement</DESCRIPTION>
+      <CODE><![CDATA[IF | THEN
+ELSIF condition THEN
+ELSE
+END IF;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="invproc" advanced="false">
+      <DESCRIPTION>Invoker Rights PROCEDURE shell</DESCRIPTION>
+      <CODE><![CDATA[PROCEDURE | ()
+  AUTHID CURRENT_USER
+IS
+BEGIN
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="lp" advanced="false">
+      <DESCRIPTION>LOOP statement</DESCRIPTION>
+      <CODE><![CDATA[LOOP
+   |;
+END LOOP;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="lpew" advanced="false">
+      <DESCRIPTION>LOOP with EXIT-WHEN statement</DESCRIPTION>
+      <CODE><![CDATA[LOOP
+   EXIT WHEN |;
+END LOOP;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="lpex" advanced="false">
+      <DESCRIPTION>LOOP with EXIT statement</DESCRIPTION>
+      <CODE><![CDATA[LOOP
+   IF | THEN
+      EXIT;
+   END IF;
+END LOOP;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="mta" advanced="false">
+      <DESCRIPTION>MODIFY TABLE ADD</DESCRIPTION>
+      <CODE><![CDATA[MODIFY TABLE | ADD (
+)]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ndsmrq" advanced="false">
+      <DESCRIPTION>NDS multiple row query</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   l_var VARCHAR2(32767);
+   TYPE refcur_t IS REF CURSOR;
+   l_cursor refcur_t;
+   l_record table%ROWTYPE; -- MODIFY TO MATCH SELECT
+BEGIN
+   OPEN l_cursor FOR 'SELECT | ';
+   LOOP
+      FETCH l_cursor INTO l_record;
+      EXIT WHEN l_cursor%NOTFOUND;
+   END LOOP;
+   CLOSE l_cursor;
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ndsplsql" advanced="false">
+      <DESCRIPTION>NDS dynamic PL/SQL block execution</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   l_block VARCHAR2(32767) :=
+      '| ';
+BEGIN
+   EXECUTE IMMEDIATE 
+      'BEGIN ' || l_block || 'END;'
+      INTO l_var
+      USING var1 IN, var2 IN OUT, var3 OUT;
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ndssrq" advanced="false">
+      <DESCRIPTION>NDS single row query</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   l_var VARCHAR2(32767);
+BEGIN
+   EXECUTE IMMEDIATE 
+      'SELECT | '
+      INTO l_var
+      USING;
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="proc" advanced="false">
+      <DESCRIPTION>PROCEDURE shell</DESCRIPTION>
+      <CODE><![CDATA[PROCEDURE | ()
+IS
+BEGIN
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="recins" advanced="false">
+      <DESCRIPTION>Record-based Insert</DESCRIPTION>
+      <CODE><![CDATA[DECLARE  
+   l_record &tablename%ROWTYPE;
+BEGIN
+   -- Available in Oracle9i Release 2 and above
+   INSERT INTO &tablename
+      VALUES l_record;
+   |
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="record" advanced="false">
+      <DESCRIPTION>Sample record declaration</DESCRIPTION>
+      <CODE><![CDATA[TYPE |RecordName IS RECORD (
+  deptno  NUMBER;
+  deptname dept.name%TYPE );
+dept_rec RecordName;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="recupd" advanced="false">
+      <DESCRIPTION>Record-based Update</DESCRIPTION>
+      <CODE><![CDATA[DECLARE  
+   l_record &tablename%ROWTYPE;
+BEGIN
+   -- Available in Oracle9i Release 2 and above
+   UPDATE &tablename
+      SET ROW = l_record
+    WHERE |;
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ups" advanced="false">
+      <DESCRIPTION>UPDATE with SAVEPOINTS</DESCRIPTION>
+      <CODE><![CDATA[BEGIN
+   SAVEPOINT my_point;
+   UPDATE | SET ;
+EXCEPTION
+   WHEN OTHERS THEN
+      ROLLBACK TO my_point;
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="utlfexc" advanced="false">
+      <DESCRIPTION>UTL_FILE exception handling</DESCRIPTION>
+      <CODE><![CDATA[DECLARE
+   fid UTL_FILE.FILE_TYPE;
+   PROCEDURE recNgo (str IN VARCHAR2)
+   IS
+   BEGIN
+      DBMS_OUTPUT.PUT_LINE (CONCAT('UTL_FILE error: ', str));
+      UTL_FILE.FCLOSE (fid);
+   END;
+BEGIN
+    |
+EXCEPTION
+   WHEN UTL_FILE.INVALID_PATH
+    THEN recNgo ('invalid_path'); 
+   WHEN UTL_FILE.INVALID_MODE
+    THEN recNgo ('invalid_mode');
+   WHEN UTL_FILE.INVALID_FILEHANDLE
+    THEN recNgo ('invalid_filehandle');
+   WHEN UTL_FILE.INVALID_OPERATION
+    THEN recNgo ('invalid_operation');
+   WHEN UTL_FILE.READ_ERROR
+    THEN recNgo ('read_error');
+   WHEN UTL_FILE.WRITE_ERROR
+    THEN recNgo ('write_error');
+   WHEN UTL_FILE.INTERNAL_ERROR
+    THEN recNgo ('internal_error');
+   WHEN OTHERS
+    THEN recNgo (SQLERRM);
+END;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="cb" advanced="false">
+      <DESCRIPTION>Comment Block</DESCRIPTION>
+      <CODE><![CDATA[-- --------------------------------------------------------------------------------
+--   |
+-- --------------------------------------------------------------------------------]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="cnt" advanced="false">
+      <DESCRIPTION>Count records in a table</DESCRIPTION>
+      <CODE><![CDATA[select  count(*)
+from    |
+ ]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="col" advanced="false">
+      <DESCRIPTION>List columns of a specific table</DESCRIPTION>
+      <CODE><![CDATA[-- Show all colums of a given table with comments ------------------------------
+with w_settings as
+(
+    select  '%|%'        as  table_name,
+            '%%'        as  column_name
+    from    dual
+)
+select  tcol.owner,
+        tcol.table_name,
+        tcol.column_id      as  col_id,
+        tcol.column_name,
+        tcol.data_type,
+        tcol.data_length,
+        tcol.data_precision,
+        tcol.data_scale,
+        tcol.nullable,
+        tcol.num_distinct,
+        comm.comments
+from    w_settings                          sett
+        inner join  sys.all_tab_columns     tcol    on  tcol.table_name     like upper(sett.table_name)
+                                                    and tcol.column_name    like upper(sett.column_name)
+        left  join  sys.all_col_comments    comm    on  comm.owner          = tcol.owner
+                                                    and comm.table_name     = tcol.table_name
+                                                    and comm.column_name    = tcol.column_name
+order   by  tcol.owner,
+            tcol.table_name,
+            tcol.column_id;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="dl" advanced="false">
+      <DESCRIPTION>Show database links</DESCRIPTION>
+      <CODE><![CDATA[select  * 
+from    dba_db_links
+order   by  owner,
+            db_link
+;          
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ls" advanced="false">
+      <DESCRIPTION>Print seperator line to output buffer</DESCRIPTION>
+      <CODE><![CDATA[install#.log#sep;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="lw" advanced="false">
+      <DESCRIPTION>Print log message to output buffer</DESCRIPTION>
+      <CODE><![CDATA[install#.log#write( '|' , 0 );]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="out" advanced="false">
+      <DESCRIPTION>DBMS_OUTPUT.PUT_LINE(...)</DESCRIPTION>
+      <CODE><![CDATA[dbms_output.put_line('|');]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="sel" advanced="false">
+      <DESCRIPTION>Select * from xxx</DESCRIPTION>
+      <CODE><![CDATA[select  *
+from    |
+where   1=1
+;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="sl" advanced="false">
+      <DESCRIPTION>Separator Comment Line</DESCRIPTION>
+      <CODE><![CDATA[-- |-----------------------------------------------------------------------------]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="sepd" advanced="false">
+      <DESCRIPTION>Separator Comment Line Double</DESCRIPTION>
+      <CODE><![CDATA[-- ================================================================================]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="cs" advanced="false">
+      <DESCRIPTION>Set current schema for this session</DESCRIPTION>
+      <CODE><![CDATA[alter session set current_schema = k|]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="tab" advanced="false">
+      <DESCRIPTION>Search for database objects</DESCRIPTION>
+      <CODE><![CDATA[-- -----------------------------------------------------------------------------
+--  Lookup database objects
+-- -----------------------------------------------------------------------------
+select  ob.object_type, ob.owner, ob.object_name, ob.status,
+        to_char(case ob.object_type when 'INDEX' then ix.num_rows when 'TABLE' then tb.num_rows else null end, '999G999G999G999', 'NLS_NUMERIC_CHARACTERS=''.''''')  as  num_rows,
+        vw.text                                                 as  source,
+        to_char(trunc(ob.created),'yyyy.mm.dd')                 as  created,
+        to_char(trunc(ob.last_ddl_time),'yyyy.mm.dd')           as  last_ddl,
+        to_char(trunc(tb.last_analyzed),'yyyy.mm.dd')           as  analyzed
+from    sys.all_objects         ob
+        left  join  sys.all_tables  tb  on  tb.owner = ob.owner and tb.table_name = ob.object_name
+        left  join  sys.all_views   vw  on  vw.owner = ob.owner and vw.view_name = ob.object_name
+        left  join  sys.all_indexes ix  on  ix.owner = ob.owner and ix.index_name = ob.object_name
+where   ob.object_type in ('TABLE','VIEW') -- 'FUNCTION','INDEX','PACKAGE','PACKAGE BODY','PROCEDURE','SEQUENCE','TRIGGER')
+    and ob.owner like upper('%')
+    and ob.object_name like upper('%|%')
+order   by  ob.object_type,
+            ob.owner,
+            ob.object_name]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="isnum" advanced="false">
+      <DESCRIPTION>Check for numeric string value</DESCRIPTION>
+      <CODE><![CDATA[length(trim(translate(|, ' +-.0123456789', ' '))) is null]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="td" advanced="false">
+      <DESCRIPTION>to_date</DESCRIPTION>
+      <CODE><![CDATA[to_date('|','yyyymmddhh24miss')]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="vr" advanced="false">
+      <DESCRIPTION>Value ranges</DESCRIPTION>
+      <CODE><![CDATA[-- -----------------------------------------------------------------------------
+--  Show value ranges in all columns of a specific table
+-- -----------------------------------------------------------------------------
+declare
+    l_table_name        varchar2(80) := '|';   -- Name of table to be analyzed
+    l_max_values        pls_integer := 10;    -- Number of x most values shown per field
+    l_value_width       pls_integer := 80;    -- Number of characters of values to be shown
+    --
+    type tab_char       is table of varchar2(4000) index by pls_integer;
+    type tab_bin        is table of pls_integer  index by pls_integer;
+    l_tab_values        tab_char;
+    l_tab_count         tab_bin;
+    l_select            varchar2(4000);
+    l_count             pls_integer;
+    --
+    cursor cur_columns is
+        select  *
+        from    sys.all_tab_columns
+        where   table_name = upper(l_table_name)
+        order   by  column_id; --column_name;
+begin
+    dbms_output.put_line(rpad('-',40+l_value_width,'-'));
+    dbms_output.put_line(to_char(sysdate, 'yyyy.mm.dd - hh24:mi:ss : ') || 'Value ranges for table ' || l_table_name);
+    dbms_output.put_line(rpad('-',40+l_value_width,'-'));
+    for rec_column in cur_columns loop
+        l_select := 'select count(distinct to_char(' || rec_column.column_name || ')) from ' || l_table_name;
+        execute immediate l_select into l_count;
+        dbms_output.put_line(lpad(rec_column.column_id,3,'0') || ' - ' || rpad(rec_column.column_name,l_value_width,'.') || ' : ' || lpad(to_char(l_count,'999G999G999G999', 'NLS_NUMERIC_CHARACTERS=''.'''''),15,' ') || '  (' || rec_column.data_type || ')');
+        if rec_column.data_type = 'NUMBER' then
+            l_select := 'select ' || rec_column.column_name;
+            if rec_column.column_name like '%_UID' then
+                l_select := l_select || ' || '' - '' || bsiutl_uctext(' || rec_column.column_name || ',246)';
+            end if; 
+        else  
+            l_select := 'select nvl(replace(to_char(' || rec_column.column_name || '),chr(10),''|''),''<null>'')'; 
+        end if;
+        l_select := l_select || ', count(*) as cnt from ' || l_table_name || ' where ' || rec_column.column_name || ' is not null ';
+        if rec_column.data_type = 'NUMBER' then
+            l_select := l_select || ' group by ' || rec_column.column_name;
+        else
+            l_select := l_select || ' group by to_char(' || rec_column.column_name || ')';
+        end if;
+        l_select := l_select || ' order by cnt desc';
+        execute immediate l_select bulk collect into l_tab_values, l_tab_count;
+        for j in 1 .. least(l_tab_values.count,l_max_values) loop
+            dbms_output.put_line('      ' || rpad(l_tab_values(j),l_value_width) || ' : ' || lpad(to_char(l_tab_count(j),'999G999G999G999', 'NLS_NUMERIC_CHARACTERS=''.'''''),15,' '));
+        end loop;
+    end loop;
+end;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="c" advanced="false">
+      <DESCRIPTION>Commit</DESCRIPTION>
+      <CODE><![CDATA[commit;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="r" advanced="false">
+      <DESCRIPTION>Rollback</DESCRIPTION>
+      <CODE><![CDATA[rollback;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="listagg" advanced="false">
+      <DESCRIPTION>Concatenate the values of a measure column</DESCRIPTION>
+      <CODE><![CDATA[listagg(distinct |, ' / ' on overflow truncate with count) within group (order by x) over (partition by x) as listagg,]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="rn" advanced="false">
+      <DESCRIPTION>Get row number of record within a group</DESCRIPTION>
+      <CODE><![CDATA[row_number() over ( partition by | order by %) as seq]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="mbsp" advanced="false">
+      <DESCRIPTION>SMS Log list from the MBSP server</DESCRIPTION>
+      <CODE><![CDATA[select  m.id,
+        m.recipient,
+        m.routing_table_name,
+      --m.destination_channel_name,
+      --m.sending_channel_name,
+        m.status_code as stat,
+        m.reason,
+      --m.creation_ts,
+        to_char(m.send_ts,'yyyy.mm.dd hh24:mi:ss') as send_ts,
+        to_char(m.mc_receive_ts,'hh24:mi:ss') as receive_ts,
+        to_char(m.mc_final_ts,'hh24:mi:ss') as final_ts,
+        to_char(replace(m.text_content,chr(10),' / ')) as message
+from    mbsp_mt_mdr     m
+where   1=1
+    and m.send_ts > trunc(sysdate)-7
+    and m.recipient like '|%'
+order   by  id desc;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="as" advanced="false">
+      <DESCRIPTION>Alter session to current schema bsi</DESCRIPTION>
+      <CODE><![CDATA[alter session set current_schema = bsi;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="sel_dwh_tele_s1" advanced="false">
+      <DESCRIPTION></DESCRIPTION>
+      <CODE><![CDATA[select  tele.load_id,
+        tele.kdnr,
+        tele.telek_nr,
+        tele.adrnr,
+        concat(concat(tele.art_cd , ' - '), 
+        case tele.art_cd 
+            when 1 then 'Telefon Privat'
+            when 2 then 'Telefon Geschäft'
+            when 3 then 'Telefax'
+            when 5 then 'Mobile'
+            when 6 then 'E-Mail'
+            when 9 then 'Website'
+            when 10 then 'Hauptnummer'
+            else '## Unbekannt ##'
+        end) as art_cd,
+        tele.landvorw,
+        tele.wert,
+        tele.delete_kz,
+        tele.trf_date,
+        tele.anspr_nr
+from    dwh_tele_s1_h         tele
+where   1=1
+  --and tele.wert is null
+  --and tele.delete_kz = 1
+  --and tele.load_id = 958
+  --and tele.kdnr = 12489972
+order   by  tele.load_id    desc,
+            tele.kdnr,
+            tele.telek_nr]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="sel_dwh_tele_s2" advanced="false">
+      <DESCRIPTION></DESCRIPTION>
+      <CODE><![CDATA[select  load_id, 
+        kdnr, 
+        telek_nr, 
+        address_nr, 
+        channel_value, 
+        channel_uid,
+        case channel_uid 
+            when 113638 then 'Telefon'
+            when 113639 then 'Telefax'
+            when 113640 then 'Mobile'
+            when 113641 then 'E-Mail'
+            when 113642 then 'Website'
+            else concat(concat('## Unbekannt : ', channel_uid), ' ##')
+        end as channel_name,
+        usage_uid, 
+        item_type_id, 
+        item_key0_nr, 
+        version_id, 
+        trf_error_msg, 
+        trf_date, 
+        concat(concat(trf_data_manipulation, ' - '),
+        case trf_data_manipulation 
+            when 0 then 'nop_has_error_msg' -- data manipulation flag for no operation because the record has an error message
+            when 1 then 'insert'            -- data manipulation flag for insert
+            when 2 then 'update'            -- data manipulation flag for update
+            when 3 then 'delete'            -- data manipulation flag for delete
+            when 4 then 'nop'               -- data manipulation flag for no operation
+            when 5 then 'insert_bulk'       -- data manipulation flag for bulk insert
+            when 6 then 'update_bulk'       -- data manipulation flag for bulk update
+            else '## Unbekannt ##'
+        end) as trf_data_manipulation,
+        global_key, 
+        repr_person_nr, 
+        old_repr_person_nr, 
+        old_repr_address_nr, 
+        old_repr_address_global_key, 
+        old_repr_address_version_id
+from    dwh_tele_s2_h       tele
+where   1=1
+  --and tele.load_id = 1009
+  --and tele.trf_data_manipulation = 3 -- Delete
+order   by  tele.load_id desc,
+            tele.kdnr,
+            tele.address_nr
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="comment" advanced="false">
+      <DESCRIPTION>Statement-Kommentar</DESCRIPTION>
+      <CODE><![CDATA[-- -----------------------------------------------------------------------------
+-- |
+-- -----------------------------------------------------------------------------
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="uct" advanced="false">
+      <DESCRIPTION>Auflösung User-Codes</DESCRIPTION>
+      <CODE><![CDATA[bsiutl_uctext(|,246) uc_text,]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ucl" advanced="false">
+      <DESCRIPTION>User Code List</DESCRIPTION>
+      <CODE><![CDATA[-- List user codes ------------------------------------------------
+select  c.code_type_nr,
+        c.uc_uid,
+        c.version_id,
+        td.text         as  text_ge,
+        te.text         as  text_en,
+        tf.text         as  text_fr,
+        ti.text	        as  text_it        
+from    bsi_uc              c
+        left  join  bsi_uc_text te  on  te.uc_uid = c.uc_uid and te.language_uid = 1303    -- Text Englisch
+        left  join  bsi_uc_text td  on  td.uc_uid = c.uc_uid and td.language_uid = 246     -- Text Deutsch
+        left  join  bsi_uc_text tf  on  tf.uc_uid = c.uc_uid and tf.language_uid = 7770    -- Text Französisch
+        left  join  bsi_uc_text ti  on  ti.uc_uid = c.uc_uid and ti.language_uid = 7771    -- Text Italienisch
+where   c.uc_uid = 0
+    or  lower(td.text) like '%|%'
+order   by  c.code_type_nr,
+            c.uc_uid
+;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="d" advanced="false">
+      <DESCRIPTION>Sel from dual</DESCRIPTION>
+      <CODE><![CDATA[select  *|
+from    dual;]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="it" advanced="false">
+      <DESCRIPTION>BSI CRM Item Type Translation</DESCRIPTION>
+      <CODE><![CDATA[case coalesce(|,0) when 103380 then 'User' when 103914 then 'Bookmark' when 103915 then 'Category' when 106064 then 'Uid' when 106240 then 'Document' when 106270 then 'CommunicationReaction' when 106348 then 'ActionRecipient' when 106349 then 'ActionRecipientHistory' when 106350 then 'ActionSearch' when 106355 then 'CaseStep' when 106363 then 'EmailAccount' when 106364 then 'EmailMessage' when 106370 then 'Job' when 106416 then 'UcTemplateLanguage' when 106422 then 'UserRole' when 106437 then 'UcText' when 106452 then 'CommunicationParticipant' when 106455 then 'CaseList' when 106463 then 'ActionReaction' when 108332 then 'ItemSummary' when 108447 then 'ProjectActivity' when 108593 then 'City' when 108594 then 'CustomerCustomer' when 108596 then 'Case' when 110323 then 'CustomerChange' when 110324 then 'BusinessChange' when 110325 then 'CommunicationChange' when 110328 then 'TaskChange' when 111828 then 'ServiceLine' when 111951 then 'KnowledgeLanguage' when 112102 then 'Contract' when 112597 then 'Benefit' when 113226 then 'ExternalContract' when 113325 then 'BenefitChange' when 113530 then 'Address' when 113550 then 'AddressUsage' when 113701 then 'CustomerAdvisor' when 117044 then 'PotentialAnalysis' when 117050 then 'PotentialAnalysisRecipient' when 117767 then 'TemplateAction' when 117908 then 'TemplateCampaign' when 119180 then 'CaseStepHistory' when 128717 then 'Offer' when 129538 then 'CaseMemo' when 129819 then 'CaseMemoChange' when 131230 then 'CaseInput' when 132962 then 'Tile' when 133135 then 'BusinessRole' when 138134 then 'CaseChange' when 138899  then 'ContractChange' when 141815 then 'OptIn' when 142086 then 'SocialMediaItem' when 144269 then 'CodeType' when 145168 then 'SocialMediaUser' when 155025 then 'TaskParticipant' when 155028 then 'CustomerCustomerRole' when 164964 then 'CaseLog' when 318595 then 'Business' when 318596 then 'Customer' when 318597 then 'Communication' when 318598 then 'Task' when 318599 then 'Ticket' when 318600 then 'Action' when 318601 then 'Knowledge' when 359571 then 'Campaign' when 106423	then 'UserSubstitude' when 106440	then 'BusinessStatus' when 106472	then 'CategoryItem' when 128260	then 'CaseItem' when 128859	then 'Newsfeed' when 133060	then 'ItemText' when 138755	then 'ContractCustomer' when 150799	then 'BankproductCustomer' when 160341	then 'DataMutation' when 163950	then 'CaseAttribute' when 168331	then 'PhoneCallLog' when 170156	then 'CommunicationBusiness' when 170495 then 'ItemEvent' when 109922 then 'CustomerInterest' when 0 then null else '=== Unknown ===' end as item_type_name,
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="cols" advanced="false">
+      <DESCRIPTION>Generate select clause for a given table</DESCRIPTION>
+      <CODE><![CDATA[-- Generate select clause for a given table with all columns within this table and a translation for UIDs ------------------------------
+with 
+    w_settings_input as 
+    (
+        select  '|'          as  table_name,
+                ''          as  table_alias,
+                100         as  lob_length
+        from    dual
+    ),
+    w_settings as
+    (
+        select  s.table_name,
+                case when s.table_alias is null then
+                    case upper(s.table_name) when 'BSI_ACTION' then 'acti' when 'BSI_ACTION_REACTION' then 'acra' when 'BSI_ACTION_RECIPIENT' then 'acre' when 'BSI_ACTION_RECIPIENT_HISTORY' then 'acrh' when 'BSI_ACTION_REVIEW_STATUS' then 'acrs' when 'BSI_ACTION_RUN' then 'acru' when 'BSI_ACTION_SEARCH' then 'acse' when 'BSI_ADDRESS' then 'addr' when 'BSI_ADDRESS_USAGE' then 'adus' when 'BSI_BENEFIT' then 'bene' when 'BSI_BENEFIT_CHANGE' then 'benc' when 'BSI_BOOKMARK' then 'boma' when 'BSI_BUSINESS' then 'busi' when 'BSI_BUSINESS_CHANGE' then 'busc' when 'BSI_BUSINESS_ROLE' then 'buro' when 'BSI_BUSINESS_STATUS' then 'bust' when 'BSI_CAMPAIGN' then 'camp' when 'BSI_CAMPAIGN_CHANGE' then 'camc' when 'BSI_CASE' then 'cass' when 'BSI_CASE_CHANGE' then 'casc' when 'BSI_CASE_INPUT' then 'caip' when 'BSI_CASE_ITEM' then 'casi' when 'BSI_CASE_LIST' then 'cali' when 'BSI_CASE_LOG' then 'calo' when 'BSI_CASE_MEMO' then 'came' when 'BSI_CASE_MEMO_CHANGE' then 'camc' when 'BSI_CASE_STEP' then 'cast' when 'BSI_CASE_STEP_HISTORY' then 'cash' when 'BSI_CASE_STEP_OUTPUT' then 'caso' when 'BSI_CATEGORY' then 'cate' when 'BSI_CATEGORY_ITEM' then 'cati' when 'BSI_CHANGE_PUBLISH' then 'chpu' when 'BSI_CITY' then 'city' when 'BSI_CODE_TYPE' then 'coty' when 'BSI_COMMUNICATION' then 'comm' when 'BSI_COMMUNICATION_CHANGE' then 'comc' when 'BSI_COMMUNICATION_PARTICIPANT' then 'comp' when 'BSI_COMMUNICATION_REACTION' then 'comr' when 'BSI_COMMUNICATION_STATUS' then 'coms' when 'BSI_CTI_CALL' then 'ctic' when 'BSI_CUSTOMER' then 'cust' when 'BSI_CUSTOMER_ADVISOR' then 'cusa' when 'BSI_CUSTOMER_CHANGE' then 'cusc' when 'BSI_CUSTOMER_CUSTOMER' then 'cucu' when 'BSI_CUSTOMER_CUSTOMER_ROLE' then 'cucr' when 'BSI_CUSTOMER_IMPORT' then 'cusi' when 'BSI_DEEP_LINK' then 'deli' when 'BSI_DEFAULT_ADDRESS_CALC' then 'dadc' when 'BSI_DISTRIBUTOR' then 'dist' when 'BSI_DISTRIBUTOR_CUSTOMER' then 'dicu' when 'BSI_DOCUMENT' then 'docu' when 'BSI_DOCUMENT_CONTENT' then 'docc' when 'BSI_DWH_INDEX' then 'dwhi' when 'BSI_EMPLOYEE' then 'empl' when 'BSI_ETL_LOG' then 'etll' when 'BSI_FOLDER' then 'fold' when 'BSI_FOLDER_CONTENT' then 'folc' when 'BSI_GLOBAL_COUNTER' then 'gloc' when 'BSI_GLOBAL_KEY_STATE' then 'glks' when 'BSI_GLOBAL_TEXT' then 'gltx' when 'BSI_GROUPWARE_ACCOUNT' then 'gwac' when 'BSI_IMPORT_CUSTOMER' then 'imcu' when 'BSI_IMPORT_DATA' then 'imda' when 'BSI_IMPORT_DATA_DUPLICATE' then 'imdd' when 'BSI_IMPORT_DATA_EXISTING' then 'imde' when 'BSI_IMPORT_META' then 'imme' when 'BSI_ITEM_SUMMARY' then 'itsu' when 'BSI_ITEM_SUMMARY_FILTER' then 'itsf' when 'BSI_ITEM_TEMPLATE_LANGUAGE' then 'ittl' when 'BSI_ITEM_TEXT' then 'ittx' when 'BSI_JOB' then 'jobb' when 'BSI_JOB_CHANGE' then 'jobc' when 'BSI_JOB_LOG' then 'jobl' when 'BSI_JOB_RUN' then 'jobr' when 'BSI_JOB_RUN_FILE' then 'jobf' when 'BSI_KNOWLEDGE' then 'know' when 'BSI_KNOWLEDGE_CHANGE' then 'knoc' when 'BSI_KNOWLEDGE_LANGUAGE' then 'knol' when 'BSI_KNOWLEDGE_PROCESS' then 'knop' when 'BSI_NEWSFEED' then 'newf' when 'BSI_NEWSFEED_RESPONSIBLE' then 'nefr' when 'BSI_OPERATION_EXECUTION' then 'opex' when 'BSI_OPT_IN' then 'opti' when 'BSI_ORGANIZATION_UNIT_FLAT' then 'oruf' when 'BSI_PARAMETER' then 'para' when 'BSI_PARAMETER_CHANGE' then 'parc' when 'BSI_PARAMETER_LIST' then 'parl' when 'BSI_PARAMETER_TO_CLUSTER_NODE' then 'parn' when 'BSI_PARAMETER_TO_ROLE' then 'parr' when 'BSI_RULE_EXECUTION' then 'rexe' when 'BSI_RULE_EXECUTION_COMPLETED' then 'rexc' when 'BSI_RULE_LOG' then 'rlog' when 'BSI_RULE_RUN' then 'rrun' when 'BSI_SOURCE_MAPPING' then 'soma' when 'BSI_TASK' then 'tasi' when 'BSI_TASK_CHANGE' then 'tasc' when 'BSI_TASK_PARTICIPANT' then 'tasp' when 'BSI_TRANSACTION' then 'tran' when 'BSI_USER' then 'usrt' when 'BSI_USER_ACL' then 'usra' when 'BSI_USER_OU_ACL' then 'usoa' when 'BSI_USER_PERMISSION_SNAPSHOT' then 'usrp' when 'BSI_USER_ROLE' then 'usro' when 'BSI_USER_SEARCH_PREFERENCE' then 'ussp' when 'BSI_USER_SUBSTITUTE' then 'ussu' 
+                        else 
+                            lower(
+                                substr(s.table_name,instr(s.table_name,'_',1,1)+1, case regexp_count(s.table_name,'_') when 1 then 4 when 2 then 2 when 3 then 2 else 1 end) || 
+                                substr(s.table_name,instr(s.table_name,'_',1,2)+1, case regexp_count(s.table_name,'_') when 1 then 0 when 2 then 2 when 3 then 1 else 1 end) ||
+                                substr(s.table_name,instr(s.table_name,'_',1,3)+1, case regexp_count(s.table_name,'_') when 1 then 0 when 2 then 0 when 3 then 1 else 1 end) ||
+                                substr(s.table_name,instr(s.table_name,'_',1,4)+1, case regexp_count(s.table_name,'_') when 1 then 0 when 2 then 0 when 3 then 0 else 1 end)  
+                            ) 
+                    end 
+                else s.table_alias end as table_alias,
+                s.lob_length
+        from    w_settings_input    s
+    ),
+    w_columns as 
+    (
+        select  tcol.column_id,
+                first_value(tcol.column_id) ignore nulls over (partition by tcol.table_name order by tcol.column_id rows between unbounded preceding and unbounded following) as first_column_id,
+                last_value(tcol.column_id)  ignore nulls over (partition by tcol.table_name order by tcol.column_id rows between unbounded preceding and unbounded following) as last_column_id,
+                lower(tcol.column_name) as column_name,
+                lower(coalesce(sett.table_alias,tcol.table_name) || '.' || tcol.column_name) as column_name_full,
+                tcol.data_type,
+                tcol.owner,
+                lower(tcol.table_name) as table_name,
+                lower(coalesce(sett.table_alias,sett.table_name)) as table_alias,
+                tcol.data_precision,
+                tcol.data_scale,
+                '''' || regexp_replace(substr(replace(lpad('9',tcol.data_precision+3-mod(tcol.data_precision,3),'9'),'999','G999'),-tcol.data_precision-trunc(tcol.data_precision/3)),'^G','') || case when tcol.data_scale > 0 then rpad('D', tcol.data_scale, '9') else '' end || '''' as number_format,
+                sett.lob_length,
+                last_value(length(coalesce(sett.table_alias,tcol.table_name) || '.' || tcol.column_name)) ignore nulls over (partition by tcol.table_name order by length(tcol.column_name) rows between unbounded preceding and unbounded following) as max_name_size,
+                length(coalesce(sett.table_alias,tcol.table_name) || '.' || tcol.column_name) as name_size                
+        from    w_settings                          sett
+                inner join  sys.all_tab_columns     tcol    on  tcol.table_name     like upper(sett.table_name)
+    )
+select  case when first_column_id = column_id then 'select  ' else '        ' end || 
+        case  
+            when data_type = 'CLOB' then 'to_char(substr('
+            when data_type = 'NUMBER' and data_scale > 0 then 'to_char(' 
+            else '' 
+        end ||  
+        column_name_full || 
+        case  
+            when data_type = 'CLOB' then ', 1,' || to_char(lob_length,'9999') || '))' || lpad('as ', max_name_size-name_size+33,' ') || column_name
+            when data_type = 'NUMBER' and data_scale > 0 then rpad(',', max_name_size-name_size, ' ') || number_format || ')' || rpad(' ', max_name_size-length(number_format)+19, ' ') || 'as ' || column_name 
+            else '' 
+        end ||  
+        case when column_name like '%_uid' then 
+                rpad(',', max_name_size-name_size+8, ' ') || 'bsiutl_uctext(' || column_name_full || ',246)' || rpad(' ', max_name_size-name_size+1, ' ') || 'as ' || replace(column_name,'_uid', '_name') 
+            when column_name like '%item_type_id' then 
+                rpad(',', max_name_size-name_size+8, ' ') || 'case ' || column_name || ' when 0 then null when 103380 then ''User'' when 103914 then ''Bookmark'' when 103915 then ''Category'' when 106064 then ''Uid'' when 106240 then ''Document'' when 106270 then ''CommunicationReaction'' when 106348 then ''ActionRecipient'' when 106349 then ''ActionRecipientHistory'' when 106350 then ''ActionSearch'' when 106355 then ''CaseStep'' when 106363 then ''EmailAccount'' when 106364 then ''EmailMessage'' when 106370 then ''Job'' when 106416 then ''UcTemplateLanguage'' when 106422 then ''UserRole'' when 106437 then ''UcText'' when 106452 then ''CommunicationParticipant'' when 106455 then ''CaseList'' when 106463 then ''ActionReaction'' when 108332 then ''ItemSummary'' when 108447 then ''ProjectActivity'' when 108593 then ''City'' when 108594 then ''CustomerCustomer'' when 108596 then ''Case'' when 110323 then ''CustomerChange'' when 110324 then ''BusinessChange'' when 110325 then ''CommunicationChange'' when 110328 then ''TaskChange'' when 111828 then ''ServiceLine'' when 111951 then ''KnowledgeLanguage'' when 112102 then ''Contract'' when 112597 then ''Benefit'' when 113226 then ''ExternalContract'' when 113325 then ''BenefitChange'' when 113530 then ''Address'' when 113550 then ''AddressUsage'' when 113701 then ''CustomerAdvisor'' when 117044 then ''PotentialAnalysis'' when 117050 then ''PotentialAnalysisRecipient'' when 117767 then ''TemplateAction'' when 117908 then ''TemplateCampaign'' when 119180 then ''CaseStepHistory'' when 129538 then ''CaseMemo'' when 129819 then ''CaseMemoChange'' when 131230 then ''CaseInput'' when 132962 then ''Tile'' when 133135 then ''BusinessRole'' when 138134 then ''CaseChange'' when 138899  then ''ContractChange'' when 141815 then ''OptIn'' when 142086 then ''SocialMediaItem'' when 144269 then ''CodeType'' when 145168 then ''SocialMediaUser'' when 155025 then ''TaskParticipant'' when 155028 then ''CustomerCustomerRole'' when 164964 then ''CaseLog'' when 318595 then ''Business'' when 318596 then ''Customer'' when 318597 then ''Communication'' when 318598 then ''Task'' when 318599 then ''Ticket'' when 318600 then ''Action'' when 318601 then ''Knowledge'' when 359571 then ''Campaign'' else ''=== Unknown ==='' end as ' || replace(column_name,'_id', '_name')
+            when column_name like '%item_key0_nr' then
+                ',' || chr(10) || '        case ' || replace(column_name,'key0_nr','type_id') ||
+                    chr(10) || '            when 0 then null' || 
+                    chr(10) || '            when 103380 then (select u.username || '' - '' || c.display_name from bsi_user u inner join bsi_customer c on c.customer_nr = u.user_nr where user_nr = ' || column_name_full || ')' ||
+                    chr(10) || '            when 318596 then (select c.customer_no || '' - '' || c.display_name from bsi_customer c where c.customer_nr = ' || column_name_full || ')' ||
+                    chr(10) || '            when 318595 then (select b.business_no || case when b.display_name is null then '''' else '' - '' || b.display_name end from bsi_business b where b.business_nr = ' || column_name_full || ')' ||
+                    chr(10) || '            when 108596 then (select c.case_no || '' - '' || bsiutl_uctext(c.process_uid,246) from bsi_case c where c.case_nr = ' || column_name_full || ')' ||
+                    chr(10) || '            when 318597 then (select bsiutl_uctext(c.channel_uid,246) || '' - '' || case when c.display_name is null then ''<noname>'' else '' - '' || c.display_name end from bsi_communication c where c.communication_nr = ' || column_name_full || ')' ||
+                    chr(10) || '            when 106370 then (select j.name from bsi_job j where j.job_nr = ' || column_name_full || ')' || 
+                    chr(10) || '            when 112102 then (select c.contract_no || '' - '' || bsiutl_uctext(c.product_uid,246) from bsi_x_contract c where c.contract_nr = ' || column_name_full || ')' || 
+                    chr(10) || '            when 106064 then bsiutl_uctext(' || column_name_full || ',246)' || 
+                    chr(10) || '        else ''<n/a>'' end as ' || replace(column_name,'_nr', '_name')
+            when column_name like '%user_nr'        then rpad(',', max_name_size-name_size+8, ' ') || '(select u.username || '' - '' || c.display_name from bsi_user u inner join bsi_customer c on c.customer_nr = u.user_nr where u.user_nr = ' || column_name_full || ') as ' || replace(column_name,'user_nr','user_name')
+            when column_name like '%customer_nr'    then rpad(',', max_name_size-name_size+8, ' ') || '(select c.customer_no || '' - '' || c.display_name from bsi_customer c where c.customer_nr = ' || column_name_full || ') as ' || replace(column_name,'customer_nr','customer_name')
+            when column_name like '%contract_nr'    then rpad(',', max_name_size-name_size+8, ' ') || '(select c.contract_no || '' - '' || bsiutl_uctext(c.product_uid,246) from bsi_x_contract c where c.contract_nr = ' || column_name_full || ') as ' || replace(column_name,'contract_nr','contract_name')
+            when column_name like '%campaign_nr'    then rpad(',', max_name_size-name_size+8, ' ') || '(select c.display_name || '' ('' || bsiutl_uctext(c.status_uid,246) || '')'' from bsi_campaign c where c.campaign_nr = ' || column_name_full || ') as ' || replace(column_name,'campaign_nr','campaign_name')
+            else '' end || 
+        case when last_column_id = column_id then chr(10) || 'from    ' || table_name || ' ' || table_alias || chr(10) || 'where   1=1' || chr(10) || ';' else ',' end 
+            as sel_clause
+from    w_columns
+order   by  column_id;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="nf" advanced="false">
+      <DESCRIPTION>Number format</DESCRIPTION>
+      <CODE><![CDATA[to_char(|, '999G999G999G999D99', 'NLS_NUMERIC_CHARACTERS=''.''''')]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="uc" advanced="false">
+      <DESCRIPTION>Check user codes</DESCRIPTION>
+      <CODE><![CDATA[-- Resolve user code(s) and show all other codes of same code type --------------------------------------------------------------------------------
+with 
+    w_code_selection    as (select '|' as code_list from dual),
+    w_code_sel_clean    as (select replace(code_list,' ','') as code_list from w_code_selection), 
+    w_user_codes        as (select * from bsi_uc c inner join w_code_sel_clean s on instr(',' || s.code_list || ',', ',' || cast(c.uc_uid as varchar2(4000)) || ',') > 0 order by instr(',' || s.code_list || ',', ',' || cast(c.uc_uid as varchar2(4000)) || ',')),
+    w_user_codes_sorted as (select c.*, rownum as row_num from w_user_codes c )
+select  uc.code_type_nr, uc.uc_uid, case when ss.row_num is null then null else '    ' || ss.row_num end as sel_index, bsiutl_uctext(uc.uc_uid,246) uc_name,
+        case when uc.value_uid = 0 then to_char(uc.value_decimal) else concat(concat(uc.value_uid, ' - '), bsiutl_uctext(uc.value_uid,246)) end as value,
+        case when uc.parent_uid = 0 then null else concat(concat(uc.parent_uid, ' - '), bsiutl_uctext(uc.parent_uid,246)) end as parent,
+        uc.sortcode, uc.shortcut, uc.ext_key, uc.text,
+        uc.uc_uid || ',  /* ' || bsiutl_uctext(uc.uc_uid,246) || ' */' as in_clause 
+from    bsi_uc                          uc
+        inner join  bsi_code_type       ct  on  ct.code_type_nr = uc.code_type_nr
+        left  join  w_user_codes_sorted ss  on  ss.uc_uid = uc.uc_uid
+where   uc.code_type_nr in (select code_type_nr from w_user_codes)
+order   by  to_number(sel_index)
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ind" advanced="false">
+      <DESCRIPTION>Show all indices for a given table</DESCRIPTION>
+      <CODE><![CDATA[-- -----------------------------------------------------------------------------
+--  Show all indices for a given table
+-- -----------------------------------------------------------------------------
+select  distinct
+        ix.table_owner, ix.table_name,
+        ix.owner,       ix.index_name,
+        ix.uniqueness,
+        ix.num_rows,    ix.distinct_keys,
+        ix.status,      ix.visibility,
+        listagg(ic.column_name, ' / ') within group (order by ic.column_position) over (partition by ic.index_owner, ic.index_name) as listagg
+from    sys.all_indexes ix
+        inner join  sys.all_ind_columns ic  on  ic.index_owner = ix.owner
+                                            and ic.index_name = ix.index_name
+where   lower(ix.table_name) like '%|%'
+order   by  ix.table_owner,
+            ix.table_name,
+            ix.index_name
+;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ver" advanced="false">
+      <DESCRIPTION>Show BSI CRM migration versions on this database</DESCRIPTION>
+      <CODE><![CDATA[select  *
+from    bsi_migration
+order   by  migration_nr desc
+;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="log" advanced="false">
+      <DESCRIPTION>Write a log entry with timestamp to dbms_output</DESCRIPTION>
+      <CODE><![CDATA[dbms_output.put_line(concat(to_char(sysdate,'yyyy.mm.dd hh24:mi:ss - '), '|'));
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="ts" advanced="false">
+      <DESCRIPTION>Start BSI CRM transaction</DESCRIPTION>
+      <CODE><![CDATA[declare
+    l_user_nr number := 0;
+    l_username varchar2(10) := '|b040910';
+begin
+    select  user_nr
+    into    l_user_nr
+    from    bsi.bsi_user    u
+    where   lower(u.username) = lower(l_username);
+    dbms_output.put_line('Starting transaction for user ' || l_user_nr || ' (' || l_username || ')');
+    bsiutl_startTransaction(l_user_nr, 103380 /* Item-Type=User */);
+exception
+    when no_data_found then
+        dbms_output.put_line('User "' || l_username || '" not found!');
+end;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="te" advanced="false">
+      <DESCRIPTION>End BSI CRM transaction</DESCRIPTION>
+      <CODE><![CDATA[call bsiutl_endTransaction('|');
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="trf" advanced="false">
+      <DESCRIPTION>Translation of TRF_DATA_MANIPULATION code in stage 2 tables of DWH Import</DESCRIPTION>
+      <CODE><![CDATA[concat(concat(trf_data_manipulation, ' - '), case trf_data_manipulation when 0 then 'NOP (ERROR)' when 1 then 'INSERT' when 2 then 'UPDATE' when 3 then 'DELETE' when 4 then 'NOP' when 5 then 'INSERT BULK' when 6 then 'UPDATE BULK' else '## UNKNOWN ##' end) as trf_data_manipulation,
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="flush" advanced="false">
+      <DESCRIPTION>Flush SQL Shared Pool for performance analysis</DESCRIPTION>
+      <CODE><![CDATA[execute sys.flush_pool;
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="cust" advanced="false">
+      <DESCRIPTION>Get customer's base data</DESCRIPTION>
+      <CODE><![CDATA[select  cust.customer_nr,
+        cust.customer_no,
+        cust.display_name,
+        cust.is_active,
+        to_char(cust.evt_birth,'yyyy.mm.dd')                   as evt_birth,
+        bsiutl_uctext(cust.nationality_country_uid,246)        as nationality,
+        bsiutl_uctext(cust.x_source_system_uid,246)            as source,
+        bsiutl_uctext(cust.rating_uid,246)                     as rating_name,
+        bsiutl_uctext(cust.type_uid,246)                       as type_name,
+        cust.private_street,
+        cust.private_address,
+        (select addr.channel_value from bsi.bsi_address addr where addr.item_key0_nr = cust.customer_nr and addr.channel_uid = 113638 and addr.is_default_address = 1 and rownum = 1) as addr_telefon,
+        (select addr.channel_value from bsi.bsi_address addr where addr.item_key0_nr = cust.customer_nr and addr.channel_uid = 113640 and addr.is_default_address = 1 and rownum = 1) as addr_mobile,
+        (select addr.channel_value from bsi.bsi_address addr where addr.item_key0_nr = cust.customer_nr and addr.channel_uid = 113641 and addr.is_default_address = 1 and rownum = 1) as addr_email
+from    bsi_customer cust
+where   1=1
+    and cust.customer_nr = |
+  --and cust.customer_no = ''
+]]></CODE>
+   </TEMPLATE>
+   <TEMPLATE name="colg" advanced="false">
+      <DESCRIPTION>Column grouping with counter</DESCRIPTION>
+      <CODE><![CDATA[-- Generate select clause for a given table with all columns within this table and a translation for UIDs ------------------------------
+with 
+    w_settings_input as 
+    (
+        select  'bsi_|'          as  table_name,
+                ''          as  column_list,      -- Comma separated list of column names
+                ''          as  table_alias,
+                100         as  lob_length
+        from    dual
+    ),
+    w_settings as
+    (
+        select  rownum as sort_nr, s.table_name, regexp_substr (',' || replace(upper(column_list),' ','') || ',', '[^,]+', 1, level) as column_name,
+                case upper(s.table_name) when 'BSI_ACTION' then 'acti' when 'BSI_ACTION_REACTION' then 'acra' when 'BSI_ACTION_RECIPIENT' then 'acre' when 'BSI_ACTION_RECIPIENT_HISTORY' then 'acrh' when 'BSI_ACTION_REVIEW_STATUS' then 'acrs' when 'BSI_ACTION_RUN' then 'acru' when 'BSI_ACTION_SEARCH' then 'acse' when 'BSI_ADDRESS' then 'addr' when 'BSI_ADDRESS_USAGE' then 'adus' when 'BSI_BENEFIT' then 'bene' when 'BSI_BENEFIT_CHANGE' then 'benc' when 'BSI_BOOKMARK' then 'boma' when 'BSI_BUSINESS' then 'busi' when 'BSI_BUSINESS_CHANGE' then 'busc' when 'BSI_BUSINESS_ROLE' then 'buro' when 'BSI_BUSINESS_STATUS' then 'bust' when 'BSI_CAMPAIGN' then 'camp' when 'BSI_CAMPAIGN_CHANGE' then 'camc' when 'BSI_CASE' then 'cass' when 'BSI_CASE_CHANGE' then 'casc' when 'BSI_CASE_INPUT' then 'caip' when 'BSI_CASE_ITEM' then 'casi' when 'BSI_CASE_LIST' then 'cali' when 'BSI_CASE_LOG' then 'calo' when 'BSI_CASE_MEMO' then 'came' when 'BSI_CASE_MEMO_CHANGE' then 'camc' when 'BSI_CASE_STEP' then 'cast' when 'BSI_CASE_STEP_HISTORY' then 'cash' when 'BSI_CASE_STEP_OUTPUT' then 'caso' when 'BSI_CATEGORY' then 'cate' when 'BSI_CATEGORY_ITEM' then 'cati' when 'BSI_CHANGE_PUBLISH' then 'chpu' when 'BSI_CITY' then 'city' when 'BSI_CODE_TYPE' then 'coty' when 'BSI_COMMUNICATION' then 'comm' when 'BSI_COMMUNICATION_CHANGE' then 'comc' when 'BSI_COMMUNICATION_PARTICIPANT' then 'comp' when 'BSI_COMMUNICATION_REACTION' then 'comr' when 'BSI_COMMUNICATION_STATUS' then 'coms' when 'BSI_CTI_CALL' then 'ctic' when 'BSI_CUSTOMER' then 'cust' when 'BSI_CUSTOMER_ADVISOR' then 'cusa' when 'BSI_CUSTOMER_CHANGE' then 'cusc' when 'BSI_CUSTOMER_CUSTOMER' then 'cucu' when 'BSI_CUSTOMER_CUSTOMER_ROLE' then 'cucr' when 'BSI_CUSTOMER_IMPORT' then 'cusi' when 'BSI_DEEP_LINK' then 'deli' when 'BSI_DEFAULT_ADDRESS_CALC' then 'dadc' when 'BSI_DISTRIBUTOR' then 'dist' when 'BSI_DISTRIBUTOR_CUSTOMER' then 'dicu' when 'BSI_DOCUMENT' then 'docu' when 'BSI_DOCUMENT_CONTENT' then 'docc' when 'BSI_DWH_INDEX' then 'dwhi' when 'BSI_EMPLOYEE' then 'empl' when 'BSI_ETL_LOG' then 'etll' when 'BSI_FOLDER' then 'fold' when 'BSI_FOLDER_CONTENT' then 'folc' when 'BSI_GLOBAL_COUNTER' then 'gloc' when 'BSI_GLOBAL_KEY_STATE' then 'glks' when 'BSI_GLOBAL_TEXT' then 'gltx' when 'BSI_GROUPWARE_ACCOUNT' then 'gwac' when 'BSI_IMPORT_CUSTOMER' then 'imcu' when 'BSI_IMPORT_DATA' then 'imda' when 'BSI_IMPORT_DATA_DUPLICATE' then 'imdd' when 'BSI_IMPORT_DATA_EXISTING' then 'imde' when 'BSI_IMPORT_META' then 'imme' when 'BSI_ITEM_SUMMARY' then 'itsu' when 'BSI_ITEM_SUMMARY_FILTER' then 'itsf' when 'BSI_ITEM_TEMPLATE_LANGUAGE' then 'ittl' when 'BSI_ITEM_TEXT' then 'ittx' when 'BSI_JOB' then 'jobb' when 'BSI_JOB_CHANGE' then 'jobc' when 'BSI_JOB_LOG' then 'jobl' when 'BSI_JOB_RUN' then 'jobr' when 'BSI_JOB_RUN_FILE' then 'jobf' when 'BSI_KNOWLEDGE' then 'know' when 'BSI_KNOWLEDGE_CHANGE' then 'knoc' when 'BSI_KNOWLEDGE_LANGUAGE' then 'knol' when 'BSI_KNOWLEDGE_PROCESS' then 'knop' when 'BSI_NEWSFEED' then 'newf' when 'BSI_NEWSFEED_RESPONSIBLE' then 'nefr' when 'BSI_OPERATION_EXECUTION' then 'opex' when 'BSI_OPT_IN' then 'opti' when 'BSI_ORGANIZATION_UNIT_FLAT' then 'oruf' when 'BSI_PARAMETER' then 'para' when 'BSI_PARAMETER_CHANGE' then 'parc' when 'BSI_PARAMETER_LIST' then 'parl' when 'BSI_PARAMETER_TO_CLUSTER_NODE' then 'parn' when 'BSI_PARAMETER_TO_ROLE' then 'parr' when 'BSI_RULE_EXECUTION' then 'rexe' when 'BSI_RULE_EXECUTION_COMPLETED' then 'rexc' when 'BSI_RULE_LOG' then 'rlog' when 'BSI_RULE_RUN' then 'rrun' when 'BSI_SOURCE_MAPPING' then 'soma' when 'BSI_TASK' then 'tasi' when 'BSI_TASK_CHANGE' then 'tasc' when 'BSI_TASK_PARTICIPANT' then 'tasp' when 'BSI_TRANSACTION' then 'tran' when 'BSI_USER' then 'usrt' when 'BSI_USER_ACL' then 'usra' when 'BSI_USER_OU_ACL' then 'usoa' when 'BSI_USER_PERMISSION_SNAPSHOT' then 'usrp' when 'BSI_USER_ROLE' then 'usro' when 'BSI_USER_SEARCH_PREFERENCE' then 'ussp' when 'BSI_USER_SUBSTITUTE' then 'ussu' 
+                    else 
+                        lower(
+                            substr(s.table_name,instr(s.table_name,'_',1,1)+1, case regexp_count(s.table_name,'_') when 1 then 4 when 2 then 2 when 3 then 2 else 1 end) || 
+                            substr(s.table_name,instr(s.table_name,'_',1,2)+1, case regexp_count(s.table_name,'_') when 1 then 0 when 2 then 2 when 3 then 1 else 1 end) ||
+                            substr(s.table_name,instr(s.table_name,'_',1,3)+1, case regexp_count(s.table_name,'_') when 1 then 0 when 2 then 0 when 3 then 1 else 1 end) ||
+                            substr(s.table_name,instr(s.table_name,'_',1,4)+1, case regexp_count(s.table_name,'_') when 1 then 0 when 2 then 0 when 3 then 0 else 1 end)  
+                        ) 
+                end as table_alias,
+                s.lob_length
+        from    w_settings_input    s
+        connect by level <= length ( trim ( both ',' from column_list ) ) - length ( replace ( column_list, ',' ) ) + 1
+    ),
+    w_columns as 
+    (
+        select  sett.sort_nr,
+                first_value(sett.sort_nr) ignore nulls over (order by sett.sort_nr rows between unbounded preceding and unbounded following) as first_sort_nr,
+                last_value(sett.sort_nr)  ignore nulls over (order by sett.sort_nr rows between unbounded preceding and unbounded following) as last_sort_nr,
+                lower(tcol.column_name) as column_name,
+                lower(coalesce(sett.table_alias,tcol.table_name) || '.' || tcol.column_name) as column_name_full,
+                tcol.data_type, tcol.owner, lower(tcol.table_name) as table_name, lower(coalesce(sett.table_alias,sett.table_name)) as table_alias,
+                tcol.data_precision, tcol.data_scale,
+                '''' || regexp_replace(substr(replace(lpad('9',tcol.data_precision+3-mod(tcol.data_precision,3),'9'),'999','G999'),-tcol.data_precision-trunc(tcol.data_precision/3)),'^G','') || case when tcol.data_scale > 0 then rpad('D', tcol.data_scale, '9') else '' end || '''' as number_format,
+                sett.lob_length,
+                last_value(length(coalesce(sett.table_alias,tcol.table_name) || '.' || tcol.column_name)) ignore nulls over (partition by tcol.table_name order by length(tcol.column_name) rows between unbounded preceding and unbounded following) as max_name_size,
+                length(coalesce(sett.table_alias,tcol.table_name) || '.' || tcol.column_name) as name_size                
+        from    w_settings                          sett
+                inner join  sys.all_tab_columns     tcol    on  tcol.table_name     like upper(sett.table_name) and tcol.column_name = sett.column_name
+        order   by  sett.sort_nr
+    ),
+    w_select as
+    (
+        select  sort_nr,
+                case when first_sort_nr = sort_nr then 'select  ' else '        ' end || 
+                case  
+                    when data_type = 'CLOB' then 'to_char(substr('
+                    when data_type = 'NUMBER' and data_scale > 0 then 'to_char(' 
+                    else '' 
+                end ||  
+                column_name_full || 
+                case  
+                    when data_type = 'CLOB' then ', 1,' || to_char(lob_length,'9999') || '))' || lpad('as ', max_name_size-name_size+38,' ') || column_name
+                    when data_type = 'NUMBER' and data_scale > 0 then rpad(',', max_name_size-name_size, ' ') || number_format || ')' || rpad(' ', max_name_size-length(number_format)+19, ' ') || 'as ' || column_name 
+                    else '' 
+                end ||  
+                case when column_name like '%_uid' then rpad(',', max_name_size-name_size+8, ' ') || 'bsiutl_uctext(' || 
+                    column_name_full || ',246)' || 
+                    rpad(' ', max_name_size-name_size+1, ' ') || 'as ' || 
+                    replace(column_name,'_uid', '_name') else '' end || 
+                case when last_sort_nr = sort_nr then ',' || chr(10) || '        to_char(count(*), ''999G999G999G990'', ''NLS_NUMERIC_CHARACTERS=''''.'''''''''') as num_rows' || chr(10) || 'from    ' || table_name || ' ' || table_alias else ',' end as query_line
+        from    w_columns
+        union   all
+        select  sort_nr + 1000,
+                case when first_sort_nr = sort_nr then 'group   by  ' else '        ' end || 
+                case  
+                    when data_type = 'CLOB' then 'to_char(substr('
+                    when data_type = 'NUMBER' and data_scale > 0 then 'to_char(' 
+                    else '' 
+                end ||  
+                column_name_full || 
+                case  
+                    when data_type = 'CLOB' then ', 1,' || to_char(lob_length,'9999') || '))' || lpad('as ', max_name_size-name_size+38,' ') || column_name
+                    when data_type = 'NUMBER' and data_scale > 0 then rpad(',', max_name_size-name_size, ' ') || number_format || ')' || rpad(' ', max_name_size-length(number_format)+19, ' ') || 'as ' || column_name 
+                    else '' 
+                end ||
+                case when last_sort_nr = sort_nr then ';' else ',' end
+        from    w_columns
+        union   all
+        select  sort_nr + 2000,
+                case when first_sort_nr = sort_nr then 'order   by  ' else '        ' end || column_name || case when last_sort_nr = sort_nr then ';' else ',' end
+        from    w_columns
+    )
+select  query_line
+from    w_select
+order   by  sort_nr;
+]]></CODE>
+   </TEMPLATE>
+</TEMPLATES>

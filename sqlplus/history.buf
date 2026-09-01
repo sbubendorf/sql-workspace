@@ -1,0 +1,5 @@
+select  to_char(vl_ref_lnr) as vl_ref_lnr, 
+        vl_ref_text 
+from    vl_ref r
+where   r.vl_ref_lnr = 14829634088459 
+    and userbk_nr = 949;
