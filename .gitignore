@@ -3,3 +3,4 @@
 .sonarlint/
 .dood/
 .vscode/
+sonar-project.properties
