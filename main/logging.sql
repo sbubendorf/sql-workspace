@@ -1,5 +1,5 @@
 -- --------------------------------------------------------------------------------
---  Logging Levels
+--  Abfrage Logging Levels
 -- --------------------------------------------------------------------------------
 
 select   ld.USERBK_NR,
@@ -21,7 +21,62 @@ order by ld.USERBK_NR,
          ld.SQL_OBJ_NAME
 ;
 
+-- Show all objects with log level "Debug" -------------
+select   ld.sql_obj_name
+from     sr_log_defi ld
+where    ld.USERBK_NR = 949
+  and    ld.LOG_LEVEL = 7
+;
 
+select   distinct listagg(distinct ld.sql_obj_name, ' / ' on overflow truncate with count) within group (order by ld.sql_obj_name) over (partition by ld.userbk_nr, ld.log_level) as sql_obj_name_list
+from     sr_log_defi ld
+where    ld.USERBK_NR = 949
+  and    ld.LOG_LEVEL = 7
+;
+
+-- --------------------------------------------------------------------------------
+--  Setzen von Logging Levels
+-- --------------------------------------------------------------------------------
+
+-- Aktuelle Session:
+
+-- Alle B2-Packages auf DEBUG setzen
+begin
+   SRQLOG00.setup(P_what => 'B2%=DEBUG');
+end;
+/
+
+-- Alternativ: Nur ein spezifisches Package
+begin
+   SRQLOG00.setup(P_what => 'B2QDISP0=DEBUG');
+   commit;
+end;
+/
+
+-- Mehrere Packages auf einmal (kommagetrennt)
+declare
+   G_LoginReturn     varchar2(30 char); --Variabel für den Return-Wert der Login-Funktion
+begin
+   G_LoginReturn := f2qlogin.F_SetUser('MD1AT', 'berlin08', 949);
+   if G_LoginReturn != 'OK' then   
+      dbms_output.put_line('Login fehlgeschlagen: ' || G_LoginReturn);
+      return;
+   end if;
+   dbms_output.put_line('Login erfolgreich!');
+   --
+   SRQLOG00.setup(P_what => 'B2QF_BL_ORDER=ERROR,B2QF_DL_ORDER=ERROR');
+   commit;
+end;
+/
+
+-- Dauerhaftes und globales Setzen der Logging-Levels:
+update   sr_log_defi    ld
+set      ld.LOG_LEVEL = 7
+where    ld.USERBK_NR = 949
+   and   ld.SQL_OBJ_NAME = 'B2%'
+;
+
+commit;
 
 
 -- --------------------------------------------------------------------------------
