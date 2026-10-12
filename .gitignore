@@ -4,3 +4,4 @@
 .dood/
 .vscode/
 sonar-project.properties
+*.csv

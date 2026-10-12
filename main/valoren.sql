@@ -20,30 +20,39 @@ WHERE   1=1
     AND vlst.TK_SYM = 'AAPL'
 ;
 
--- Show all colums of a given table with comments ------------------------------
-select  tcol.owner,
-        tcol.table_name,
-        tcol.column_id      as  col_id,
-        tcol.column_name,
-        tcol.data_type,
-        tcol.data_length,
-        tcol.data_precision,
-        tcol.data_scale,
-        tcol.nullable,
-        tcol.num_distinct,
-        comm.comments
-from    (
-            select  '%DAT%'     as  owner_name,
-                    'vl%'        as  table_name,
-                    '%isin%'        as  column_name
-            from    dual
-        )                                   sett
-        inner join  sys.all_tab_columns     tcol    on  tcol.owner          like upper(sett.owner_name)
-                                                    and tcol.table_name     like upper(sett.table_name)
-                                                    and tcol.column_name    like upper(sett.column_name)
-        left  join  sys.all_col_comments    comm    on  comm.owner          = tcol.owner
-                                                    and comm.table_name     = tcol.table_name
-                                                    and comm.column_name    = tcol.column_name
-order   by  tcol.owner,
-tcol.table_name,
-tcol.column_id;
+
+
+-- Valoren ohne Bezeichnung ---------------------------------------
+select   s.vl_lnr,
+         s.VL_NR,
+         s.TK_SYM,
+         s.ISIN_NR,
+         t.TEXT_REC,
+         t.TEXT_REC_KURZ,
+         r.vl_ref_lnr,
+         b.kt_lnr
+from     vl_stamm                s
+         left  join  vl_text     t  on t.vl_text_lnr = s.vl_text_lnr and t.userbk_nr = s.userbk_nr and t.vl_abschnitt_nr = 0 and t.sprache_cd = 1
+         left  join  vl_ref      r  on r.vl_lnr = s.vl_lnr and r.userbk_nr = s.userbk_nr
+         left  join  kt_saldo    b  on b.VL_REF_LNR = r.VL_REF_LNR and b.userbk_nr = r.userbk_nr
+where    s.USERBK_NR = 949
+   and   t.text_rec is null
+fetch first 500 rows only
+;
+
+-- Valoren mit mehr als einer Bezeichnung ---------------------------------------
+select   s.vl_lnr,
+         s.VL_NR,
+         s.TK_SYM,
+         s.ISIN_NR,
+         count(*) as bezeichnung_count
+from     vl_stamm                s
+         left  join  vl_text     t  on t.vl_text_lnr = s.vl_text_lnr and t.userbk_nr = s.userbk_nr and t.vl_abschnitt_nr = 0 and t.sprache_cd = 1
+where    s.USERBK_NR = 949
+group by s.vl_lnr,
+         s.VL_NR,
+         s.TK_SYM,
+         s.ISIN_NR
+having   count(*) > 1
+fetch first 500 rows only
+;

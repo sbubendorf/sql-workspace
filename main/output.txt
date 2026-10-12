@@ -1,0 +1,16 @@
+declare
+*
+ERROR at line 1:
+ORA-06550: Zeile 13, Spalte 24:
+PLS-00103: Fand das Symbol "<" als eines der folgenden erwartet wurde:
+   ( ) - + case mod new not null <an identifier>
+   <a double-quoted delimited-identifier> <a bind variable>
+   table continue avg count current exists max min prior sql
+   stddev sum variance execute multiset the both leading
+   trailing forall merge year month day hour minute second
+   timezone_hour timezone_minute timezone_region timezone_abbr
+   time timestamp interval date
+   <a string literal with character set specification>
+   
+Help: https://docs.oracle.com/error-help/db/ora-06550/
+

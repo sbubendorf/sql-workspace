@@ -24,13 +24,24 @@ where    status = 'INVALID'
    and   owner = 'F2LDATP0'
 order by owner, 
          object_name,
-         object_type
+         object_type,
+         object_name
 ; 
 
+-- Show error details ------------------------------------------------------------
+select   ue.name, 
+         ue.type, 
+         ue.line, 
+         ue.position, 
+         ue.text
+from     user_errors          ue
+where    ue.type in ('TYPE', 'TYPE BODY', 'PACKAGE', 'PACKAGE BODY')
+order by ue.name, ue.type, ue.sequence;
 
-ALTER PACKAGE B2QF_SL_TRADING COMPILE;
 
-ALTER PACKAGE B2QF_SL_TRADING COMPILE BODY;
+ALTER PACKAGE B2QI_TRADING_1 COMPILE;
+
+ALTER PACKAGE B2QI_TRADING_1 COMPILE BODY;
 
 
 -- Recompile all invalid objects ---------------------------------------
@@ -49,7 +60,7 @@ begin
                   'PACKAGE',        1, 
                   'PACKAGE BODY',   2,
                   'FUNCTION',       3, 
-                  'PROCEDURE',      4, 
+                     'PROCEDURE',      4, 
                   'VIEW',           5,
                   'TRIGGER',        6, 
                   9
@@ -69,3 +80,5 @@ begin
       end;
    end loop;
 end;
+/
+

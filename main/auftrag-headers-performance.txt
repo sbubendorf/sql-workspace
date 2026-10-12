@@ -1,0 +1,136 @@
+Performance-Messungen ReadBoersenauftragHeader
+
+Variante 1 mit Type-Constructor im Cursor mit F_CreateRowInfo im Constructor
+>---------------------------------------------------------------------------------------------------
+
+Profiling started into file b2_test_20260902134014.trc
+
+Read headers with the following filter:
+ - PAGING_SIZE         :100000
+ - OBJ_STAT_CD         :Count: 1 -- 800
+
+Page #1 with 52526 headers returned in 35.408486 seconds
+Total Order Headers returned: 52526
+Total Pages read: 1
+Total Texts read: 213
+
+Execution time: 00:00:36.997289000
+Execution time: 00:00:29.018914000
+Execution time: 00:00:25.566170000
+Execution time: 00:00:26.034212000
+Execution time: 00:00:25.023143000
+Execution time: 00:00:25.913344000
+Execution time: 00:00:25.466576000
+Execution time: 00:00:26.362641000
+
+Variante 2 mit Type-Constructor im Cursor ohne F_CreateRowInfo im Constructor
+>---------------------------------------------------------------------------------------------------
+
+Profiling started into file b2_test_20260902140121.trc
+
+Read headers with the following filter:
+ - PAGING_SIZE         :100000
+ - OBJ_STAT_CD         :Count: 1 -- 800
+
+Page #1 with 52526 headers returned in 41.635459 seconds
+Total Order Headers returned: 52526
+Total Pages read: 1
+Total Texts read: 213
+
+Execution time: 00:00:43.062429000
+Execution time: 00:00:24.382685000
+Execution time: 00:00:21.086802000
+Execution time: 00:00:21.534435000
+Execution time: 00:00:21.927001000
+Execution time: 00:00:24.068557000
+Execution time: 00:00:20.794044000
+Execution time: 00:00:21.712358000
+
+Variante 3 mit Filter-Constructor in separatem Loop ohne F_CreateRowInfo im Constructor
+>---------------------------------------------------------------------------------------------------
+
+Profiling started into file b2_test_20260903093638.trc
+
+Read headers with the following filter:
+ - PAGING_SIZE         :100000
+ - OBJ_STAT_CD         :Count: 1 -- 800
+
+Page #1 with 52526 headers returned in 35.279910 seconds
+Total Order Headers returned: 52526
+Total Pages read: 1
+Total Texts read: 213
+
+Execution time: 00:00:38.712119000
+Execution time: 00:00:13.678108000
+Execution time: 00:00:14.627980000
+Execution time: 00:00:13.659675000
+Execution time: 00:00:15.374239000
+Execution time: 00:00:13.955138000
+Execution time: 00:00:15.532506000
+Execution time: 00:00:13.888671000
+Execution time: 00:00:13.528194000
+Execution time: 00:00:14.959356000
+Execution time: 00:00:14.106119000
+Execution time: 00:00:13.959030000
+Execution time: 00:00:13.121873000
+Execution time: 00:00:14.250972000
+
+
+
+
+Variante 4 mit Filter-Constructor in separatem Loop mit F_CreateRowInfo im Constructor
+>---------------------------------------------------------------------------------------------------
+
+Profiling started into file b2_test_20260903105517.trc
+
+Read headers with the following filter:
+ - PAGING_SIZE         :100000
+ - OBJ_STAT_CD         :Count: 1 -- 800
+
+Page #1 with 52526 headers returned in 31.908215 seconds
+Total Order Headers returned: 52526
+Total Pages read: 1
+Total Texts read: 213
+
+Execution time: +000000000 00:00:33.796868000
+Execution time: +000000000 00:00:16.367099000
+Execution time: +000000000 00:00:15.449863000
+Execution time: +000000000 00:00:15.210270000
+Execution time: +000000000 00:00:15.583448000
+Execution time: +000000000 00:00:15.430601000
+Execution time: +000000000 00:00:15.440434000
+Execution time: +000000000 00:00:14.863045000
+Execution time: +000000000 00:00:15.143774000
+Execution time: +000000000 00:00:15.028466000
+Execution time: +000000000 00:00:15.537787000
+Execution time: +000000000 00:00:15.090644000
+
+
+Variante 5 wie oben aber mit select * Cursor
+>---------------------------------------------------------------------------------------------------
+
+Profiling started into file b2_test_20260903130656.trc
+
+Read headers with the following filter:
+ - PAGING_SIZE         :100000
+ - OBJ_STAT_CD         :Count: 1 -- 800
+
+Page #1 with 52526 headers returned in 37.163148 seconds
+Total Order Headers returned: 52526
+Total Pages read: 1
+Total Texts read: 213
+
+Execution time: +000000000 00:00:39.218740000
+Execution time: +000000000 00:00:18.423296000
+Execution time: +000000000 00:00:20.299191000
+Execution time: +000000000 00:00:19.401271000
+Execution time: +000000000 00:00:20.060254000
+Execution time: +000000000 00:00:19.468247000
+Execution time: +000000000 00:00:19.083308000
+Execution time: +000000000 00:00:19.106231000
+Execution time: +000000000 00:00:20.528258000
+Execution time: +000000000 00:00:21.086306000
+Execution time: +000000000 00:00:19.510875000
+
+
+
